@@ -42,37 +42,6 @@ resource "aws_eks_cluster" "eks_cluster" {
   ]
 }
 
-# EKS Cluster IAM Role Attached from IAM module
-
-# resource "aws_iam_role" "eks_cluster_role" {
-#   name = "${var.cluster_name}-eks-cluster-role"
-
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = "sts:AssumeRole"
-#         Effect = "Allow"
-#         Principal = {
-#           Service = "eks.amazonaws.com"
-#         }
-#       }
-#     ]
-#   })
-
-#   tags = var.tags
-# }
-
-# # Attach IAM Policies to EKS Cluster Role
-# resource "aws_iam_role_policy_attachment" "eks_cluster_policy_attachment" {
-#   role       = aws_iam_role.eks_cluster_role.name
-#   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-# }
-
-resource "aws_iam_role_policy_attachment" "eks_vpc_resource_controller_policy_attachment" {
-  role       = aws_iam_role.eks_cluster_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-}
 
 # Node Group IAM Role
 resource "aws_iam_role" "eks_node_role" {
@@ -111,34 +80,34 @@ resource "aws_iam_role_policy_attachment" "eks_ec2_container_registry_readonly_p
 }
 
 # Launch Template for Node Group
-resource "aws_launch_template" "eks_node_group_lt" {
-  name_prefix   = "${var.cluster_name}-lt"
-  image_id      = data.aws_ami.eks_worker_ami.id
-  instance_type = var.instance_type
+# resource "aws_launch_template" "eks_node_group_lt" {
+#   name_prefix   = "${var.cluster_name}-lt"
+#   image_id      = data.aws_ami.eks_worker_ami.id
+#   instance_type = var.instance_type
 
-  key_name = var.key_name
+#   key_name = var.key_name
 
-  user_data = base64encode(templatefile("${path.module}/user-data.sh", {
-    cluster_name = var.cluster_name
-  }))
+#   user_data = base64encode(templatefile("${path.module}/user-data.sh", {
+#     cluster_name = var.cluster_name
+#   }))
 
-  block_device_mappings {
-    device_name = "/dev/xvda"
-    ebs {
-      volume_size           = var.ebs_volume_size
-      volume_type           = "gp2"
-      encrypted             = true
-      kms_key_id            = aws_kms_key.eks_kms.arn
-      delete_on_termination = true
-    }
-  }
+#   block_device_mappings {
+#     device_name = "/dev/xvda"
+#     ebs {
+#       volume_size           = var.ebs_volume_size
+#       volume_type           = "gp2"
+#       encrypted             = true
+#       kms_key_id            = aws_kms_key.eks_kms.arn
+#       delete_on_termination = true
+#     }
+#   }
 
-  iam_instance_profile {
-    name = aws_iam_instance_profile.eks_instance_profile.name
-  }
+#   iam_instance_profile {
+#     name = aws_iam_instance_profile.eks_instance_profile.name
+#   }
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
 resource "aws_iam_instance_profile" "eks_instance_profile" {
   name = "${var.cluster_name}-instance-profile"
